@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 24px;
+        }
+
+        .email-wrapper {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-header {
+            background: #e50914;
+            color: #fff;
+            padding: 20px 24px;
+        }
+
+        .email-title {
+            margin: 0;
+        }
+
+        .email-content {
+            padding: 24px;
+        }
+
+        .booking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        .detail-label,
+        .detail-text,
+        .detail-text-bold {
+            padding: 8px 0;
+        }
+
+        .detail-label {
+            color: #666;
+        }
+
+        .detail-text-bold {
+            font-weight: bold;
+        }
+
+        .note {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .email-footer {
+            background: #f0f0f0;
+            padding: 12px 24px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-header">
+            <h2 class="email-title">Booking Confirmed</h2>
+        </div>
+        <div class="email-content">
+            <p>Hi {{ user.first_name|default:user.username }},</p>
+            <p>Your booking is confirmed. Here are your details:</p>
+            <table class="booking-table">
+                <tr>
+                    <td class="detail-label">Movie</td>
+                    <td class="detail-text-bold">{{ movie.name }}</td>
+                </tr>
+                <tr>
+                    <td class="detail-label">Theater</td>
+                    <td class="detail-text">{{ theater.name }}</td>
+                </tr>
+                <tr>
+                    <td class="detail-label">Showtime</td>
+                    <td class="detail-text">{{ theater.time }}</td>
+                </tr>
+                <tr>
+                    <td class="detail-label">Seat(s)</td>
+                    <td class="detail-text-bold">{{ seat_numbers|join:", " }}</td>
+                </tr>
+                {% if payment_id %}
+                <tr>
+                    <td class="detail-label">Payment ID</td>
+                    <td class="detail-text">{{ payment_id }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td class="detail-label">Booked at</td>
+                    <td class="detail-text">{{ booked_at }}</td>
+                </tr>
+            </table>
+            <p class="note">Please arrive at least 15 minutes before showtime.</p>
+        </div>
+        <div class="email-footer">
+            Thanks for booking with BookMySeat!
+        </div>
+    </div>
+</body>
+</html>

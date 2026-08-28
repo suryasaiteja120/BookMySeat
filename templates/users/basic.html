@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}BookMySeat{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+        .navbar-brand img{
+            display: flex;
+            align-items: center;
+        }
+        .navbar-nav .nav-link {
+            color: #fff;
+            margin-right: 15px;
+        }
+        banner {
+            background-color: #007bff;
+            color: #fff;
+            padding: 40px 0;
+            text-align: center;
+        }
+        .social-icons a {
+            color: #fff;
+            margin: 0 10px;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+        .social-icons a:hover {
+            color: #007bff;
+        }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="/"><image src="https://play-lh.googleusercontent.com/o6yLU2LrPETB1fXyDeIaE-dO59qq3fHBqIGBg5HwEJ4xgHLTDsEFI9WmQCirxuQz6xAqWptO7dqprL5nWeB0tQ" alt="logo" height="40" width="45" /> BookMySeat</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            {% if user.is_authenticated %}
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/movies">Movies</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
+                <li class="nav-item">
+                    <form method="Post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button 
+                        type="submit" 
+                        class="nav-link"
+                        >
+                        Logout
+                    </button>
+                    </form>
+                </li>
+            </ul>
+            {% else %}
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+            </ul>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+    <footer class="bg-dark text-white text-center py-3 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div>
+                        <h5>About Us</h5>
+                        <p>BookMySeat is your go-to platform for seamless movie ticket booking. We connect you with theaters, showtimes, and the best seats in the house.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">Movies</a></li>
+                        <li><a href="#">Book Tickets</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Follow Us</h5>
+                    <div class="social-icons">
+                        <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+                        <a href="#" aria-label="Twitter" title="Twitter"><i class="fab fa-twitter" aria-hidden="true"></i></a>
+                        <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+                <hr class="mt-4 mb-4" />
+                <div class="text-center">
+                    <p>&copy; 2024 BookMySeat. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  </body>
+</html>

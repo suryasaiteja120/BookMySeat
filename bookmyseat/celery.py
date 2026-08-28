@@ -1,0 +1,15 @@
+import os
+from celery import Celery
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bookmyseat.settings')
+
+# The 'bookmyseat' name here becomes the prefix for auto-generated task
+# names/logs -- it doesn't need to match anything else.
+app = Celery('bookmyseat')
+
+# Read all CELERY_* settings from Django's settings.py (namespace='CELERY'
+# means we write CELERY_BROKER_URL instead of BROKER_URL etc).
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Auto-discover tasks.py in every installed app (finds movies/tasks.py).
+app.autodiscover_tasks()

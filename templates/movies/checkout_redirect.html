@@ -1,0 +1,61 @@
+{% extends "users/basic.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/checkout_redirect.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="card mx-auto checkout-card">
+        <div class="card-body">
+            <h4 class="card-title mb-3">Seats Reserved</h4>
+            <p class="text-muted">{{ order.theatre.movie.name }} — {{ order.theatre.name }}</p>
+            <p>Seats: <strong>{% for s in order.seats.all %}{{ s.seat_number }}{% if not forloop.last %}, {% endif %}{% endfor %}</strong></p>
+            <h3 class="mb-3">₹{{ order.amount }}</h3>
+
+            <div id="timerBox" class="mb-4">
+                <p class="text-muted mb-1">Complete your payment within</p>
+                <div id="countdown" class="checkout-countdown">02:00</div>
+            </div>
+
+            <a id="payLink" href="{{ stripe_url }}" class="btn btn-success btn-lg">Proceed to Payment</a>
+            <a href="{% url 'payment_cancel' order.id %}" class="btn btn-link d-block mt-2">Cancel</a>
+
+            <div id="expiredBox" class="checkout-expired" hidden>
+                <p class="text-danger mt-3">Your seat reservation has expired.</p>
+                <a href="{% url 'theater_list' order.theatre.movie.id %}" class="btn btn-outline-primary">Select seats again</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var expiresAt = new Date("{{ order.hold_expires_at|date:'c' }}").getTime();
+    var countdownEl = document.getElementById('countdown');
+    var payLink = document.getElementById('payLink');
+    var timerBox = document.getElementById('timerBox');
+    var expiredBox = document.getElementById('expiredBox');
+
+    function tick() {
+        var remainingMs = expiresAt - Date.now();
+        if (remainingMs <= 0) {
+            timerBox.hidden = true;
+            payLink.hidden = true;
+            expiredBox.hidden = false;
+            clearInterval(intervalId);
+            return;
+        }
+        var totalSeconds = Math.floor(remainingMs / 1000);
+        var minutes = Math.floor(totalSeconds / 60);
+        var seconds = totalSeconds % 60;
+        countdownEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        if (totalSeconds <= 30) {
+            countdownEl.classList.add('checkout-countdown--urgent');
+        }
+    }
+
+    tick();
+    var intervalId = setInterval(tick, 1000);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+Booking Confirmed - BookMySeat
+==============================
+
+Hi {{ user.first_name|default:user.username }},
+
+Your booking is confirmed. Here are your details:
+
+Movie:    {{ movie.name }}
+Theater:  {{ theater.name }}
+Showtime: {{ theater.time }}
+Seat(s):  {{ seat_numbers|join:", " }}
+{% if payment_id %}Payment ID: {{ payment_id }}{% endif %}
+Booked at: {{ booked_at }}
+
+Please arrive at least 15 minutes before showtime.
+
+Thanks for booking with BookMySeat!

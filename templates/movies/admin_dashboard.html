@@ -1,0 +1,157 @@
+{% extends "users/basic.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+<div class="container py-5">
+    <h1 class="mb-4">Admin Analytics Dashboard</h1>
+
+    <div id="loadingMsg" class="text-muted">Loading analytics...</div>
+    <div id="dashboardContent" class="dashboard-content-hidden">
+
+        <!-- Summary cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100"><div class="card-body">
+                    <div class="text-muted small">Total Revenue</div>
+                    <div class="h3 mb-0" id="statRevenue">-</div>
+                </div></div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100"><div class="card-body">
+                    <div class="text-muted small">Paid Orders</div>
+                    <div class="h3 mb-0" id="statOrders">-</div>
+                </div></div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100"><div class="card-body">
+                    <div class="text-muted small">Avg Order Value</div>
+                    <div class="h3 mb-0" id="statAvgOrder">-</div>
+                </div></div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100"><div class="card-body">
+                    <div class="text-muted small">Cancellation Rate</div>
+                    <div class="h3 mb-0" id="statCancelRate">-</div>
+                </div></div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8 mb-3">
+                <div class="card h-100"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">Revenue Over Time</h5>
+                        <select id="revenuePeriod" class="form-control form-control-sm revenue-period-select" title="Select revenue period" aria-label="Select revenue period">
+                            <option value="day">Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                    </div>
+                    <canvas id="revenueChart" height="90"></canvas>
+                </div></div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100"><div class="card-body">
+                    <h5 class="card-title">Peak Booking Hours</h5>
+                    <canvas id="peakHoursChart" height="140"></canvas>
+                </div></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100"><div class="card-body">
+                    <h5 class="card-title">Most Popular Movies</h5>
+                    <canvas id="popularMoviesChart" height="120"></canvas>
+                </div></div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100"><div class="card-body">
+                    <h5 class="card-title">Busiest Theaters (Occupancy %)</h5>
+                    <canvas id="busiestTheatersChart" height="120"></canvas>
+                </div></div>
+            </div>
+        </div>
+
+        <p class="text-muted small mt-3" id="cacheNote"></p>
+    </div>
+    <div id="errorMsg" class="alert alert-danger d-none"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+let revenueChart, peakHoursChart, popularMoviesChart, busiestTheatersChart;
+
+function loadDashboard(period) {
+    period = period || 'day';
+    fetch('{% url "admin_dashboard_api" %}?revenue_period=' + period)
+        .then(function (res) {
+            if (res.status === 401 || res.status === 403) {
+                throw new Error('You are not authorized to view this dashboard.');
+            }
+            if (!res.ok) throw new Error('Failed to load dashboard data.');
+            return res.json();
+        })
+        .then(renderDashboard)
+        .catch(function (err) {
+            document.getElementById('loadingMsg').classList.add('d-none');
+            document.getElementById('errorMsg').classList.remove('d-none');
+            document.getElementById('errorMsg').textContent = err.message;
+        });
+}
+
+function renderDashboard(data) {
+    document.getElementById('loadingMsg').classList.add('d-none');
+    document.getElementById('dashboardContent').classList.remove('dashboard-content-hidden');
+
+    document.getElementById('statRevenue').textContent = '₹' + data.summary.total_revenue.toLocaleString('en-IN');
+    document.getElementById('statOrders').textContent = data.summary.paid_order_count.toLocaleString('en-IN');
+    document.getElementById('statAvgOrder').textContent = '₹' + data.summary.avg_order_value.toLocaleString('en-IN');
+    document.getElementById('statCancelRate').textContent = data.cancellation.rate_percent + '%';
+    document.getElementById('cacheNote').textContent =
+        'Analytics are cached for up to 5 minutes and refresh automatically after new bookings.';
+
+    var revLabels = data.revenue.map(r => r.period).reverse();
+    var revValues = data.revenue.map(r => r.total_revenue).reverse();
+    if (revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: { labels: revLabels, datasets: [{ label: 'Revenue (₹)', data: revValues, borderColor: '#e50914', backgroundColor: 'rgba(229,9,20,0.1)', fill: true, tension: 0.2 }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    var hourLabels = data.peak_hours.map(h => h.hour + ':00');
+    var hourValues = data.peak_hours.map(h => h.count);
+    if (peakHoursChart) peakHoursChart.destroy();
+    peakHoursChart = new Chart(document.getElementById('peakHoursChart'), {
+        type: 'bar',
+        data: { labels: hourLabels, datasets: [{ label: 'Bookings', data: hourValues, backgroundColor: '#0d6efd' }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 90, minRotation: 90 } } } }
+    });
+
+    var movieLabels = data.popular_movies.map(m => m.name);
+    var movieValues = data.popular_movies.map(m => m.booking_count);
+    if (popularMoviesChart) popularMoviesChart.destroy();
+    popularMoviesChart = new Chart(document.getElementById('popularMoviesChart'), {
+        type: 'bar',
+        data: { labels: movieLabels, datasets: [{ label: 'Bookings', data: movieValues, backgroundColor: '#198754' }] },
+        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } }
+    });
+
+    var theaterLabels = data.busiest_theaters.map(t => t.name);
+    var theaterValues = data.busiest_theaters.map(t => t.occupancy_rate);
+    if (busiestTheatersChart) busiestTheatersChart.destroy();
+    busiestTheatersChart = new Chart(document.getElementById('busiestTheatersChart'), {
+        type: 'bar',
+        data: { labels: theaterLabels, datasets: [{ label: 'Occupancy %', data: theaterValues, backgroundColor: '#fd7e14' }] },
+        options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { max: 100 } } }
+    });
+}
+
+document.getElementById('revenuePeriod').addEventListener('change', function () {
+    loadDashboard(this.value);
+});
+
+loadDashboard('day');
+</script>
+{% endblock %}

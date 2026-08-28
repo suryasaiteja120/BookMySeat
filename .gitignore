@@ -1,0 +1,11 @@
+start.ps1
+.env
+db.sqlite3
+*.pyc
+__pycache__/
+venv/
+env/
+logs/
+media/movies/seed_movie_*.png
+.vscode/
+staticfiles/

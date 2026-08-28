@@ -1,0 +1,30 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="card mx-auto payment-result-card">
+        <div class="card-body">
+            {% if outcome == 'success' %}
+                <h4 class="text-success mb-3">✓ Booking Confirmed</h4>
+                <p>Your payment was verified and your seats are booked. A confirmation email is on its way.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-primary mt-2">Browse more movies</a>
+            {% elif outcome == 'invalid_signature' %}
+                <h4 class="text-danger mb-3">Payment Verification Failed</h4>
+                <p>We couldn't verify this payment's authenticity, so your booking was not confirmed. If money was deducted, it will be refunded automatically — no valid payment was recorded on our end.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-outline-primary mt-2">Back to movies</a>
+            {% elif outcome == 'failed' %}
+                <h4 class="text-danger mb-3">Booking Couldn't Be Completed</h4>
+                <p>Your payment could not be turned into a confirmed booking. Any charge will be refunded. Please try again.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-outline-primary mt-2">Back to movies</a>
+            {% elif outcome == 'cancelled' %}
+                <h4 class="mb-3">Payment Cancelled</h4>
+                <p>No charge was made. Your held seats have been released for other users.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-outline-primary mt-2">Back to movies</a>
+            {% elif outcome == 'expired' %}
+                <h4 class="mb-3">Checkout Session Expired</h4>
+                <p>Your seat hold timed out. Please select your seats again.</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-outline-primary mt-2">Back to movies</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

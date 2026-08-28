@@ -1,0 +1,87 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="card mx-auto checkout-card">
+        <div class="card-body">
+            <h4 class="card-title mb-3">Complete your payment</h4>
+            <p class="text-muted">{{ order.theatre.movie.name }} — {{ order.theatre.name }}</p>
+            <p>Seats: <strong>{% for s in order.seats.all %}{{ s.seat_number }}{% if not forloop.last %}, {% endif %}{% endfor %}</strong></p>
+            <h3 class="mb-4">₹{{ order.amount }}</h3>
+            <p class="text-muted small">Your seats are held for {{ order.hold_expires_at|date:"H:i" }} — complete payment before then.</p>
+            <button id="payBtn" class="btn btn-success btn-lg">Pay Now</button>
+            <a href="{% url 'payment_cancel' order.id %}" class="btn btn-link d-block mt-2">Cancel</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('payBtn').addEventListener('click', function () {
+    // Razorpay fires BOTH `handler` (on success) and `modal.ondismiss`
+    // (whenever the modal closes -- which also happens right after a
+    // successful payment). Without this flag, ondismiss's redirect to the
+    // cancel page can win a race against handler's redirect to the
+    // success callback, incorrectly showing "Payment Cancelled" even
+    // though the payment succeeded.
+    var paymentHandled = false;
+
+    var options = {
+        key: '{{ razorpay_key_id }}',
+        amount: '{{ amount_paise }}',
+        currency: 'INR',
+        name: 'BookMySeat',
+        description: 'Movie ticket payment',
+        order_id: '{{ order.razorpay_order_id }}',
+        handler: function (response) {
+
+            console.log("PAYMENT SUCCESS");
+            console.log(response);
+            paymentHandled = true;
+            // Hand the payment result to our SERVER for signature
+            // verification -- we never mark the booking as paid based on
+            // this callback firing alone.
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "payment_callback" %}';
+
+            function addField(name, value) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            }
+            addField('csrfmiddlewaretoken', '{{ csrf_token }}');
+            addField('razorpay_order_id', response.razorpay_order_id);
+            addField('razorpay_payment_id', response.razorpay_payment_id);
+            addField('razorpay_signature', response.razorpay_signature);
+
+            document.body.appendChild(form);
+            form.submit();
+        },
+        modal: {
+            ondismiss: function () {
+                // Only treat this as a real cancellation if the success
+                // handler never fired.
+                if (!paymentHandled) {
+                    window.location.href = '{% url "payment_cancel" order.id %}';
+                }
+            }
+        },
+        theme: { color: '#e50914' }
+    };
+    var rzp = new Razorpay(options);
+    rzp.on('payment.failed', function(response){
+
+    console.log("PAYMENT FAILED");
+    console.log(response);
+
+    if(!paymentHandled){
+        window.location.href="{% url 'payment_cancel' order.id %}";
+    }
+
+});
+    rzp.open();
+});
+</script>
+{% endblock %}

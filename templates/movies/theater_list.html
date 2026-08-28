@@ -1,0 +1,320 @@
+{% extends "users/basic.html" %} 
+{% block content %}
+<style>
+    /* Styling */
+    body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.movie-title {
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Theatre Info Styling */
+.theatre-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;
+  flex-wrap: wrap; /* Responsive wrapping */
+}
+
+.theatre-info strong {
+  font-size: 18px;
+  flex: 1;
+}
+
+/* Info Icons Styling */
+.info-icons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px; /* Space between icons */
+  margin-top: 10px;
+  flex: 2;
+}
+
+.info-icons i {
+  margin-right: 5px;
+  font-size: 18px;
+}
+
+.info-section {
+  flex: 1;
+  text-align: right;
+}
+
+/* Show Times Styling */
+.show-times {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  flex-wrap: wrap; /* Responsive wrapping */
+}
+
+.time-box {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px 20px;
+  text-align: center;
+  background-color: #f1f1f1;
+  margin-bottom: 10px;
+  flex: 1;
+  min-width: 100px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.time-box:hover {
+  transform: scale(1.05);
+  background-color: #28a745;
+  color: white;
+}
+
+.time-box span {
+  display: block;
+  font-size: 12px;
+  color: black;
+}
+.time-box span:hover {
+  color: white;
+}
+
+/* Non-Cancellable Styling */
+.non-cancellable {
+  color: #ffc107;
+  font-size: 12px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.non-cancellable i {
+  margin-right: 5px;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+  .theatre-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-section {
+    text-align: left;
+    margin-top: 10px;
+  }
+
+  .show-times {
+    justify-content: space-between;
+  }
+
+  .time-box {
+    flex: 1 1 100%;
+    margin-bottom: 10px;
+  }
+}
+
+.trailer-wrapper {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.trailer-facade {
+  position: relative;
+  cursor: pointer;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.trailer-facade img {
+  width: 100%;
+  display: block;
+  opacity: 0.8;
+}
+
+.trailer-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trailer-play-btn i {
+  font-size: 22px;
+  margin-left: 4px;
+}
+
+.trailer-fallback-msg {
+  display: none;
+  text-align: center;
+  padding: 16px;
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.trailer-empty {
+  text-align: center;
+  padding: 1rem;
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+  </style>
+  
+  <body>
+    <div class="container">
+      <!-- Movie Title -->
+      <div class="movie-title">Movie - {{ movie.name }}</div>
+
+      <!-- Trailer: click-to-load facade, not a live iframe on page load.
+           This is the standard performance pattern for embedding YouTube --
+           loading YouTube's actual iframe immediately pulls in a large
+           chunk of third-party JS even if the user never watches it. We
+           only create the real iframe once the user clicks play. -->
+      <div class="trailer-wrapper mb-4">
+        {% if movie.trailer_embed_id %}
+          <div class="trailer-facade" data-video-id="{{ movie.trailer_embed_id }}">
+            <img src="https://img.youtube.com/vi/{{ movie.trailer_embed_id }}/hqdefault.jpg"
+                 alt="{{ movie.name }} trailer thumbnail"
+                 loading="lazy">
+            <div class="trailer-play-btn">
+              <i class="fas fa-play text-white"></i>
+            </div>
+          </div>
+          <div class="trailer-fallback-msg">
+            <p class="mb-2">This trailer couldn't be loaded.</p>
+            <a href="https://www.youtube.com/watch?v={{ movie.trailer_embed_id }}" target="_blank" rel="noopener noreferrer">
+              Watch it on YouTube instead
+            </a>
+          </div>
+        {% else %}
+          <div class="trailer-empty text-center p-4">
+            <p class="mb-0 text-muted">Trailer not available for this movie.</p>
+          </div>
+        {% endif %}
+      </div>
+  
+      <!-- Conditional Check for Theaters -->
+      {% if theaters %}
+        <!-- Theater List and Showtimes -->
+        {% for theater in theaters %}
+        <div class="theatre-info">
+          <div>
+            <strong>{{ theater.name }} Theater</strong>
+            <div class="info-icons mt-2">
+              <i class="fas fa-mobile-alt text-success"></i> M-Ticket
+              <i class="fas fa-utensils text-warning ms-3"></i> Food & Beverage
+              <i class="fas fa-parking text-primary ms-3"></i> Parking Available
+              <i class="fas fa-wheelchair text-info ms-3"></i> Wheelchair Access
+              <i class="fas fa-glasses text-danger ms-3"></i> 3D Show Available
+            </div>
+          </div>
+        </div>
+  
+        <div class="show-times">
+          <div class="time-box">
+            {{ theater.time }}
+            <a href="{% url 'book_seats' theater.id %}">
+              <span>Book Now</span>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- Message when no theaters are available -->
+        <div class="no-theaters mt-4">
+          <p>Sorry, no theaters are available for this movie at the moment.</p>
+        </div>
+      {% endif %}
+  
+      <div class="non-cancellable mt-4">
+        <i class="fas fa-circle text-warning"></i> Non-cancellable
+      </div>
+    </div>
+  </body>
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+    var facade = document.querySelector('.trailer-facade');
+    if (!facade) return;
+
+    facade.addEventListener('click', function () {
+        // videoId came straight from Django's `movie.trailer_embed_id`,
+        // which is server-side validated (11-char whitelist charset,
+        // whitelisted host) before it's ever rendered into the page --
+        // so this data-attribute can only ever contain a safe ID, never
+        // arbitrary attacker-controlled markup or script.
+        var videoId = facade.getAttribute('data-video-id');
+        var wrapper = facade.parentElement;
+        var fallback = wrapper.querySelector('.trailer-fallback-msg');
+
+        var iframe = document.createElement('iframe');
+        iframe.width = '100%';
+        iframe.height = '360';
+        iframe.style.border = '0';
+        iframe.title = 'Movie trailer';
+        iframe.allow = 'accelerated-inplace-media; encrypted-media; picture-in-picture';
+        // Sandbox restricts what the embedded page can do -- no top-level
+        // navigation, no popups, no access to our page's storage/cookies.
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        // youtube-nocookie.com avoids setting tracking cookies until the
+        // user actually interacts with the player.
+        // encodeURIComponent as defense-in-depth even though videoId is
+        // already validated against an 11-char whitelist server-side.
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?autoplay=1';
+
+        var loaded = false;
+        iframe.addEventListener('load', function () { loaded = true; });
+
+        facade.replaceWith(iframe);
+
+        // Cross-origin iframes never let us inspect *why* a video failed
+        // (removed, private, region-blocked) -- the 'load' event fires
+        // even for YouTube's own "video unavailable" page. A load timeout
+        // is the practical fallback: if nothing has loaded within a few
+        // seconds (e.g. blocked by the network), swap in a working link
+        // instead of leaving a dead, silent embed.
+        setTimeout(function () {
+            if (!loaded && fallback) {
+                iframe.replaceWith(fallback);
+                fallback.style.display = 'block';
+            }
+        }, 6000);
+    });
+});
+</script>
+<!-- <h1>Theater for {{movie.name}}</h1>
+<ul>
+  {% for theater in theaters %}
+  <li>
+    <strong>{{theater.name}}</strong>{{theater.time}}
+    <a href="{% url 'book_seats' theater.id %}">View Seats</a>
+  </li>
+  {% endfor %}
+</ul> -->
+{% endblock %}
