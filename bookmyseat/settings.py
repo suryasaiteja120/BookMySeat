@@ -72,7 +72,7 @@ else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BookMySeat <noreply@bookmyseat.local>')
-EMAIL_TIMEOUT = 10
+EMAIL_TIMEOUT = 5
 
 # --- Celery (background task queue for booking confirmation emails) ---
 # Broker is Redis by default; override via env var if Redis runs elsewhere.
