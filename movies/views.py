@@ -20,6 +20,7 @@ from .models import Booking, Genre, LANGUAGE_CHOICES, Movie, Order, Theater, Web
 from .booking import create_seat_hold, SeatUnavailableError
 from .payments import create_checkout_session, retrieve_checkout_session, verify_and_parse_webhook_event
 from .tasks import send_booking_confirmation_email
+from .analytics import invalidate_dashboard_cache
 
 logger = logging.getLogger('movies.payments')
 
@@ -224,7 +225,12 @@ def _finalize_paid_order(order, gateway_payment_id):
         return []
 
     if created_bookings:
-        send_booking_confirmation_email.delay([b.id for b in created_bookings])
+        try:
+            send_booking_confirmation_email.delay([b.id for b in created_bookings])
+        except Exception as exc:
+            logger.error('Could not queue confirmation email for booking(s) %s: %s',
+                         [b.id for b in created_bookings], exc)
+        invalidate_dashboard_cache()
     return created_bookings
 
 
