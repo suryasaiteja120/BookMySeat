@@ -51,7 +51,7 @@ class Command(BaseCommand):
                     description='Auto-generated movie for load/performance testing.',
                     language=random.choice(language_codes),
                 )
-                movie.image.save(f'placeholder_{i}.png', ContentFile(PLACEHOLDER_PNG), save=False)
+                movie.image.save(f'seed_movie_{i}.png', ContentFile(PLACEHOLDER_PNG), save=False)
                 created_movies.append(movie)
 
                 if len(created_movies) >= BATCH_SIZE:

@@ -7,5 +7,6 @@ venv/
 env/
 logs/
 media/movies/seed_movie_*.png
+media/movies/placeholder_*.png
 .vscode/
 staticfiles/
