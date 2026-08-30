@@ -1,7 +1,6 @@
 import random
 from decimal import Decimal
 
-from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -12,14 +11,6 @@ GENRE_NAMES = [
     'Sci-Fi', 'Fantasy', 'Mystery', 'Animation', 'Documentary', 'Musical',
 ]
 
-# A tiny 1x1 transparent PNG used as a placeholder so ImageField doesn't
-# error out on missing files during a bulk seed. Real movies would have
-# real posters uploaded through the admin.
-PLACEHOLDER_PNG = bytes.fromhex(
-    '89504e470d0a1a0a0000000d4948445200000001000000010802000000907753'
-    'de0000000c4944415408d763f8ffff3f0005fe02fea1399e1e0000000049454e'
-    '44ae426082'
-)
 
 
 class Command(BaseCommand):
@@ -51,7 +42,7 @@ class Command(BaseCommand):
                     description='Auto-generated movie for load/performance testing.',
                     language=random.choice(language_codes),
                 )
-                movie.image.save(f'seed_movie_{i}.png', ContentFile(PLACEHOLDER_PNG), save=False)
+                movie.image = 'movies/placeholder_550.png'
                 created_movies.append(movie)
 
                 if len(created_movies) >= BATCH_SIZE:

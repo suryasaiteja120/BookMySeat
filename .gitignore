@@ -10,3 +10,4 @@ media/movies/seed_movie_*.png
 media/movies/placeholder_*.png
 .vscode/
 staticfiles/
+!media/movies/placeholder_550.png
