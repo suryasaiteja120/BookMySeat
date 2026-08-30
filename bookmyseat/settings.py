@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -171,18 +172,10 @@ WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-         # SQLite has no true row-level locking -- concurrent writers
-        # serialize at the connection/database level. Without an explicit
-        # timeout, a second writer that can't immediately acquire the lock
-        # raises "database is locked" almost instantly. Setting this makes
-        # it wait (queue) up to 20s instead, which is what lets our
-        # concurrency test show a clean "one wins, one is correctly
-        # rejected" result instead of a raw database error.
-        'OPTIONS': {'timeout': 20},
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 
