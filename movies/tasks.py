@@ -1,7 +1,8 @@
 import logging
+import os
+import requests
 
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.db import transaction
 from django.utils import timezone
@@ -65,20 +66,59 @@ def send_booking_confirmation_email(self, booking_ids):
             context
         )
 
-        msg = EmailMultiAlternatives(
-            subject=f'Your booking for {first.Movie.name} is confirmed',
-            body=text_body,
-            to=[user.email],
+        brevo_api_key = os.environ.get('BREVO_API_KEY')
+        brevo_sender_email = os.environ.get('BREVO_SENDER_EMAIL')
+        brevo_sender_name = os.environ.get(
+            'BREVO_SENDER_NAME',
+            'BookMySeat'
         )
 
-        msg.attach_alternative(html_body, 'text/html')
-        msg.send(fail_silently=False)
+        if not brevo_api_key:
+            raise RuntimeError('BREVO_API_KEY is not configured')
+
+        if not brevo_sender_email:
+            raise RuntimeError('BREVO_SENDER_EMAIL is not configured')
+
+        response = requests.post(
+            'https://api.brevo.com/v3/smtp/email',
+            headers={
+                'accept': 'application/json',
+                'api-key': brevo_api_key,
+                'content-type': 'application/json',
+            },
+            json={
+                'sender': {
+                    'name': brevo_sender_name,
+                    'email': brevo_sender_email,
+                },
+                'to': [
+                    {
+                        'email': user.email,
+                        'name': user.get_full_name() or user.username,
+                    }
+                ],
+                'subject': f'Your booking for {first.Movie.name} is confirmed',
+                'textContent': text_body,
+                'htmlContent': html_body,
+            },
+            timeout=20,
+        )
+
+        response.raise_for_status()
 
         Booking.objects.filter(
             id__in=booking_ids
         ).update(
             confirmation_email_sent=True
         )
+
+        logger.info(
+            'Brevo confirmation email sent for booking(s) %s to user %s. Response: %s',
+            booking_ids,
+            user.username,
+            response.text,
+        )
+
 
         logger.info(
             'Confirmation email sent for booking(s) %s to user %s',
