@@ -2,7 +2,14 @@ from django.contrib import auth
 from django.urls import path
 from django.contrib.auth import views as auth_views
 
-from .views import register, login_view, profile, reset_password, home
+from .views import (
+    register,
+    login_view,
+    profile,
+    reset_password,
+    password_reset,
+    home,
+)
 
 
 urlpatterns = [
@@ -17,10 +24,15 @@ urlpatterns = [
 
     # Change password / custom reset password
     path(
-        'reset_password/',
-        reset_password,
-        name='change_password'
-    ),
+     'password-reset/',
+     auth_views.PasswordResetView.as_view(
+          template_name='users/password_reset.html',
+          email_template_name='users/password_reset_email.txt',
+          subject_template_name='users/password_reset_subject.txt',
+          success_url='/password-reset/done/'
+     ),
+     name='password_reset'
+     ),
 
     # Profile
     path('profile/', profile, name='profile'),
@@ -30,15 +42,10 @@ urlpatterns = [
     # -------------------------------------------------
 
     path(
-        'password-reset/',
-        auth_views.PasswordResetView.as_view(
-            template_name='users/password_reset.html',
-            email_template_name='users/password_reset_email.txt',
-            subject_template_name='users/password_reset_subject.txt',
-            success_url='/password-reset/done/'
-        ),
-        name='password_reset'
-    ),
+     'password-reset/',
+     password_reset,
+     name='password_reset'
+     ),
 
     path(
         'password-reset/done/',
