@@ -1,0 +1,79 @@
+/* Admin Analytics Dashboard */
+
+.dashboard-content-hidden {
+    display: none;
+}
+
+.admin-dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Dashboard heading */
+.container.py-5 h1 {
+    font-weight: 600;
+    color: #172b4d;
+}
+
+/* Summary cards */
+.container.py-5 .card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.container.py-5 .card-body {
+    padding: 20px;
+}
+
+/* Summary values */
+#statRevenue,
+#statOrders,
+#statAvgOrder,
+#statCancelRate {
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Chart cards */
+#revenueChart,
+#peakHoursChart,
+#popularMoviesChart,
+#busiestTheatersChart {
+    width: 100% !important;
+}
+
+/* Revenue period dropdown */
+.revenue-period-select {
+    width: 160px;
+}
+
+/* Loading message */
+#loadingMsg {
+    padding: 20px 0;
+}
+
+/* Error message */
+#errorMsg {
+    margin-top: 20px;
+}
+
+/* Cache note */
+#cacheNote {
+    margin-bottom: 0;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+    .container.py-5 {
+        padding-top: 30px !important;
+    }
+
+    .container.py-5 h1 {
+        font-size: 28px;
+    }
+
+    .revenue-period-select {
+        width: 130px;
+    }
+}
