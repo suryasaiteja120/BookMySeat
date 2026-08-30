@@ -3,18 +3,13 @@ import random
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
-from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
 from movies.models import Booking, Genre, LANGUAGE_CHOICES, Movie, Order, Theater, seats
 
-PLACEHOLDER_PNG = bytes.fromhex(
-    '89504e470d0a1a0a0000000d4948445200000001000000010802000000907753'
-    'de0000000c4944415408d763f8ffff3f0005fe02fea1399e1e0000000049454e'
-    '44ae426082'
-)
+
 
 # Hour-of-day weights (index 0-23) -- biased toward lunch and evening
 # showtimes, so "peak booking hours" has a genuine, visible peak rather
@@ -62,7 +57,7 @@ class Command(BaseCommand):
                 description='Seeded movie for dashboard performance testing.',
                 language=random.choice([c for c, _ in LANGUAGE_CHOICES]),
             )
-            m.image.save(f'seed_movie_{i}.png', ContentFile(PLACEHOLDER_PNG), save=False)
+            m.image = 'movies/placeholder_550.png'
             movies.append(m)
         Movie.objects.bulk_create(movies, batch_size=500)
         movies = list(Movie.objects.filter(cast='Actor A, Actor B, Actor C'))
