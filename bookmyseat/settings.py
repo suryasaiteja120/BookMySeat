@@ -62,15 +62,18 @@ AUTH_USER_MODEL = 'auth.User'
 # box with no setup. Set EMAIL_HOST as an environment variable to switch to
 # real SMTP delivery (e.g. Gmail, SendGrid, Mailgun) -- never hardcode real
 # credentials directly in this file.
-if os.environ.get('EMAIL_HOST'):
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# ---------------------------------------------------------
+# Email - Brevo HTTPS API
+# ---------------------------------------------------------
+
+EMAIL_BACKEND = 'users.email_backend.BrevoEmailBackend'
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    'BookMySeat'
+)
+
+EMAIL_TIMEOUT = 20
 
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BookMySeat <noreply@bookmyseat.local>')
 EMAIL_TIMEOUT = 5

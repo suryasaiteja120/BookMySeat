@@ -2,6 +2,7 @@ import logging
 import os
 import requests
 
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -15,7 +16,6 @@ from django.utils.http import urlsafe_base64_encode
 
 from .forms import UserRegisterForm, UserUpdateForm
 from movies.models import Movie, Booking
-
 
 logger = logging.getLogger('movies.email')
 
@@ -250,57 +250,28 @@ def password_reset(request):
         """
 
         try:
-            brevo_api_key = os.environ.get('BREVO_API_KEY')
-            brevo_sender_email = os.environ.get(
-                'BREVO_SENDER_EMAIL'
-            )
-            brevo_sender_name = os.environ.get(
-                'BREVO_SENDER_NAME',
-                'BookMySeat'
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email],
             )
 
-            if not brevo_api_key:
-                raise RuntimeError(
-                    'BREVO_API_KEY is not configured'
-                )
-
-            if not brevo_sender_email:
-                raise RuntimeError(
-                    'BREVO_SENDER_EMAIL is not configured'
-                )
-
-            response = requests.post(
-                'https://api.brevo.com/v3/smtp/email',
-                headers={
-                    'accept': 'application/json',
-                    'api-key': brevo_api_key,
-                    'content-type': 'application/json',
-                },
-                json={
-                    'sender': {
-                        'name': brevo_sender_name,
-                        'email': brevo_sender_email,
-                    },
-                    'to': [
-                        {
-                            'email': user.email,
-                            'name': (
-                                user.get_full_name()
-                                or user.username
-                            ),
-                        }
-                    ],
-                    'subject': subject,
-                    'textContent': text_body,
-                    'htmlContent': html_body,
-                },
-                timeout=20,
+            email.attach_alternative(
+                html_body,
+                'text/html'
             )
 
-            response.raise_for_status()
+            email.send(fail_silently=False)
 
             logger.info(
                 'Password reset email sent to user %s',
+                user.username
+            )
+
+        except Exception:
+            logger.exception(
+                'Failed to send password reset email to user %s',
                 user.username
             )
 
