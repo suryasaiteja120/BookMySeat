@@ -1,0 +1,44 @@
+/* Movie List Page */
+
+.search-bar {
+    margin-bottom: 20px;
+}
+
+.search-bar .form-control {
+    border-radius: 6px 0 0 6px;
+}
+
+.search-bar .btn {
+    border-radius: 0 6px 6px 0;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.movie-card-img {
+    height: 300px;
+    object-fit: cover;
+}
+
+.card-title {
+    font-weight: 600;
+}
+
+.card-footer .btn {
+    width: 100%;
+}
+
+.filter-checkbox {
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
