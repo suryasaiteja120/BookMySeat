@@ -183,54 +183,116 @@ def book_seats(request, theater_id):
 def _finalize_paid_order(order, gateway_payment_id):
     """
     The single place that turns a verified payment into real Bookings.
-    Idempotent -- safe to call twice for the same Order (a no-op if it's
-    already 'paid'), since both the redirect callback and the webhook can
-    end up calling this for the same successful payment.
-    """
-    if order.status == 'paid':
-        return list(order.bookings.all())
 
-    held_seats = list(order.held_seats.select_for_update())
+    The Order and its held seats are locked inside one database transaction
+    so that the Stripe callback and webhook cannot finalize the same order
+    simultaneously.
+    """
     try:
         with transaction.atomic():
+            # Lock the order first so callback + webhook cannot finalize it
+            # simultaneously.
+            order = Order.objects.select_for_update().get(pk=order.pk)
+
+            # Idempotency: if another request already completed this order,
+            # simply return the existing bookings.
+            if order.status == 'paid':
+                return list(order.bookings.all())
+
+            # IMPORTANT:
+            # select_for_update() MUST be evaluated inside transaction.atomic().
+            held_seats = list(
+                order.held_seats.select_for_update()
+            )
+
             created_bookings = []
+
             for seat in held_seats:
+                # The seat is already locked, but refresh its latest values.
                 seat.refresh_from_db()
+
                 if seat.is_booked:
-                    raise IntegrityError(f"Seat {seat.seat_number} was already booked.")
+                    raise IntegrityError(
+                        f"Seat {seat.seat_number} was already booked."
+                    )
+
                 booking = Booking.objects.create(
-                    user=order.user, seat=seat, Movie=order.theatre.movie,
-                    theatre=order.theatre, order=order, payment_id=gateway_payment_id,
+                    user=order.user,
+                    seat=seat,
+                    Movie=order.theatre.movie,
+                    theatre=order.theatre,
+                    order=order,
+                    payment_id=gateway_payment_id,
                 )
+
                 seat.is_booked = True
                 seat.held_by_order = None
                 seat.held_until = None
-                seat.save(update_fields=['is_booked', 'held_by_order', 'held_until'])
+
+                seat.save(
+                    update_fields=[
+                        'is_booked',
+                        'held_by_order',
+                        'held_until',
+                    ]
+                )
+
                 created_bookings.append(booking)
 
+            # Mark the order paid only after all bookings were created.
             order.status = 'paid'
             order.gateway_payment_id = gateway_payment_id
-            order.save(update_fields=['status', 'gateway_payment_id'])
+
+            order.save(
+                update_fields=[
+                    'status',
+                    'gateway_payment_id',
+                ]
+            )
 
     except IntegrityError as exc:
-        logger.error('Booking creation failed after payment for Order %s: %s. Attempting refund.', order.id, exc)
+        # Payment succeeded but booking could not be completed.
+        # Refund the Stripe payment rather than leaving the customer charged.
+        logger.error(
+            'Booking creation failed after payment for Order %s: %s. '
+            'Attempting refund.',
+            order.id,
+            exc,
+        )
+
         try:
-            stripe.Refund.create(payment_intent=gateway_payment_id)
+            stripe.Refund.create(
+                payment_intent=gateway_payment_id
+            )
             order.status = 'failed'
+
         except Exception as refund_exc:
-            logger.critical('REFUND FAILED for Order %s, payment %s: %s. Needs manual review.',
-                             order.id, gateway_payment_id, refund_exc)
+            logger.critical(
+                'REFUND FAILED for Order %s, payment %s: %s. '
+                'Needs manual review.',
+                order.id,
+                gateway_payment_id,
+                refund_exc,
+            )
             order.status = 'failed'
+
         order.save(update_fields=['status'])
         return []
 
     if created_bookings:
         try:
-            send_booking_confirmation_email.delay([b.id for b in created_bookings])
+            send_booking_confirmation_email.delay(
+                [b.id for b in created_bookings]
+            )
         except Exception as exc:
-            logger.error('Could not queue confirmation email for booking(s) %s: %s',
-                         [b.id for b in created_bookings], exc)
+            logger.error(
+                'Could not queue confirmation email for booking(s) %s: %s',
+                [b.id for b in created_bookings],
+                exc,
+            )
+
         invalidate_dashboard_cache()
+
     return created_bookings
 
 
